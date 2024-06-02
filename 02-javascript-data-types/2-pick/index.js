@@ -14,7 +14,5 @@ export const pick = (obj, ...fields) => {
     }
   });
 
-  let newObj = Object.fromEntries(newArr);
-
-  return newObj;
+  return Object.fromEntries(newArr);
 };
