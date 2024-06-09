@@ -5,10 +5,18 @@
  */
 export function createGetter(path) {
   const arrPath = path.split(`.`);
+
   return (obj) => {
+    let curr = obj;
+    
     arrPath.forEach((elemArr) => {
-      obj = obj[elemArr];    
+      if (elemArr in curr) {
+        curr = curr[elemArr];
+      } else {
+        return curr = undefined;
+      }
     });
-    return obj;
+
+    return curr;
   };
 }
