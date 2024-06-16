@@ -1,71 +1,82 @@
 export default class ColumnChart {
-  constructor (objInput) {
-    this.objInput = objInput;
-    this.render();
-    //update();    
+  element;
+  chartHeight = 50;
+  constructor ({
+    data = [],
+    label = '',
+    link = '',
+    value = 0,
+    formatHeading = value => value,
+  } = {}) {
+    this.data = data;
+    this.label = label;
+    this.link = link;
+    this.value = value;
+    this.formatHeading = formatHeading;  
+    this.element = this.createElement(this.createTemplate());
   }
 
-  render() {
-    let dataElem;
-    let labelElem;
-    let valueElem;
-
-    for (const key in this.objInput) {
-      if (key == `data`) {
-        dataElem = this.objInput[key];
-      }
-      if (key == `label`) {
-        labelElem = this.objInput[key];
-      }
-      if (key == `value`) {
-        valueElem = this.objInput[key];
-      }
+  renderLink() {
+    if (this.link) {
+      return `<a class="column-chart__link" href="${this.link}">View all</a>`;
     }
+    return ``;
+  }
 
-    this.elem = document.createElement(`div`);
-    this.elem.className = `column-chart`;
-    this.elem.style = `--chart-height: 50`;
+  createElement(template) {
+    const element = document.createElement(`div`);
+    element.innerHTML = template;
+    return element.firstElementChild;
+  }
 
-    this.elem.insertAdjacentHTML(`afterbegin`, `
-        <div class="column-chart__title">Total ${labelElem}</div>
+  getColumnProps() {
+    const maxValue = Math.max(...this.data);
+    const scale = 50 / maxValue;
+  
+    return this.data.map(item => {
+      return {
+        percent: (item / maxValue * 100).toFixed(0) + '%',
+        value: String(Math.floor(item * scale))
+      };
+    });
+  }
+
+  createDateScale() {
+    return this.getColumnProps().map(({value, percent}) => (`
+      <div style="--value: ${value}" data-tooltip="${percent}"></div>`
+    )).join(``);
+  }
+
+  changeClass() {
+    return this.data.length ? `column-chart` : `column-chart column-chart_loading`;
+  }
+
+  createTemplate() {
+    return (
+      `<div class="${this.changeClass()}" style="--chart-height: 50">
+        <div class="column-chart__title">
+        ${this.label}
+        ${this.renderLink()}
+        </div>
         <div class="column-chart__container">
-          <div data-element="header" class="column-chart__header">${valueElem}</div>
+          <div data-element="header" class="column-chart__header">${this.formatHeading(this.value)}</div>
           <div data-element="body" class="column-chart__chart">
-          <!--Данные-->
+          ${this.createDateScale()}
           </div>
-        </div>`);
+        </div>
+      </div>`);
+  }
 
-    let dataBody = this.elem.querySelector(`.column-chart__chart`);
-    const maxValue = Math.max(...dataElem);
+  update(newData) {
+    this.data = newData;
+    this.element.querySelector(`[data-element="body"]`).innerHTML = this.createDateScale();
+  }
 
-    if (!dataElem.length) {
-      dataBody.insertAdjacentHTML(`beforeend`, `
-        <img src="\charts-skeleton.svg">
-        `);
-    } else {
-      for (const item of dataElem) {
-        dataBody.insertAdjacentHTML(`beforeend`, `
-          <div style="--value: ${item}" data-tooltip="${Math.round(item * 100 / maxValue)}%"></div>
-          `);
-      }
-    }
+  remove() {
+    this.element.remove();
+  }
 
-    console.log(this.elem);
-
-    return this.elem;
+  destroy() {
+    this.remove();
   }
 }
-
-/*    const salesChart = new ColumnChart({
-        data: salesData,
-        label: 'sales',
-        value: 243437,
-        formatHeading: data => `$${data}`
-      });
-      
-      const ordersChart = new ColumnChart({
-        data: ordersData,
-        label: 'orders',
-        value: 344,
-        link: '#'
-      }); */
