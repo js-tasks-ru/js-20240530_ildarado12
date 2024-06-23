@@ -1,51 +1,48 @@
 export default class NotificationMessage {
   static currentShowComponent;
 
-  constructor(message = ``, {duration = 1000, type = ``}) {
+  constructor(message = ``, {duration, type} = {duration: 0, type: ``}) {
     this.message = message;
     this.duration = duration;
     this.type = type;
+    this.element = this.createElement(this.createShow());
   }
 
-  createElem(template) {
-    const element = document.createElement(`DIV`);
-    element.innerHTML = template;
-    return document.body.append(element.firstElementChild);
+  createElement(template) {
+    const container = document.createElement(`DIV`);
+    container.innerHTML = template;
+    return container.firstElementChild;
   }
 
   createShow() {
-    return (`
-      <div class="notification ${this.type}" style="--value:${this.duration / 1000}s">
-          <div class="timer"></div>
-          <div class="inner-wrapper">
-              <div class="notification-header">${this.type}</div>
-              <div class="notification-body">
-              ${this.message}
-              </div>
+    return (
+      `<div class="notification ${this.type}" style="--value:${this.duration / 1_000}s">
+        <div class="timer"></div>
+        <div class="inner-wrapper">
+          <div class="notification-header">${this.type}</div>
+          <div class="notification-body">
+            ${this.message}
           </div>
-      </div>
-    `);
+        </div>
+      </div>`);
   }
 
-  show() {
+  show(container = document.body) {
     if (NotificationMessage.currentShowComponent) {
-      NotificationMessage.currentShowComponent.hide();
+      NotificationMessage.currentShowComponent.remove();
     }
     NotificationMessage.currentShowComponent = this;
 
-    this.createElem(this.createShow());
-    
-    const timer = document.querySelector(`.timer`);
-    timer.addEventListener(`animationend`, () => this.hide(), {once: true});
+    container.append(this.element);
+    this.timerId = setTimeout(() => this.remove(), this.duration);
   }
 
-  hide() {
-    if (document.querySelector(`.notification`)) {
-      document.querySelector(`.notification`).remove();
-    }
+  remove() {
+    this.element.remove();
   }
 
   destroy() {
-    this.hide();
+    this.remove();
+    clearTimeout(this.timerId);
   }
 }
