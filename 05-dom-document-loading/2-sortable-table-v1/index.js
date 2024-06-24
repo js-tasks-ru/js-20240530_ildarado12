@@ -52,33 +52,25 @@ export default class SortableTable {
     return productBody.outerHTML;
   }
 
-  sort(fielValue = ``, orderValue = ``) {
+  sort(fielValue, orderValue) {
+    const fieldConfig = this.headerConfig.find(config => config.id === fielValue);
 
-    let sortTypeStr;
-
-    for (const objHeader of this.headerConfig) {
-      if (fielValue == objHeader.id) {
-        sortTypeStr = objHeader.sortType;
-      }
+    if (!fieldConfig || !fieldConfig.sortable) {
+      return;
     }
 
-    if (sortTypeStr == `string`) {
-      if (orderValue == `desc`) {
-        this.data.sort((b, a) => a[fielValue].localeCompare(b[fielValue], [`ru`, `en`], {sensitivity: 'case', caseFirst: 'upper'}));
-      } else {
-        this.data.sort((a, b) => a[fielValue].localeCompare(b[fielValue], [`ru`, `en`], {sensitivity: 'case', caseFirst: 'upper'}));
-      }
-    }
-    if (sortTypeStr == `number`) {
-      if (orderValue == `desc`) {
-        this.data.sort((a, b) => b[fielValue] - a[fielValue]);
-      } else {
-        this.data.sort((a, b) => a[fielValue] - b[fielValue]);
-      }
+    const k = orderValue === `asc` ? 1 : -1;
+
+    if (fieldConfig.sortType === `string`) {
+      this.data.sort((a, b) => k * a[fielValue].localeCompare(b[fielValue], [`ru`, `en`], {
+        caseFirst: `upper`}));
+    } else {
+      this.data.sort((a, b) => k * (a[fielValue] - b[fielValue]));
     }
 
-    this.remove();
-    document.getElementById(`root`).append(this.createElement(this.createTemlate()));
+    const productsBody = document.querySelector(`[data-element="body"]`);
+    productsBody.remove();
+    document.querySelector(`[data-element="header"]`).insertAdjacentHTML(`afterEnd`, this.createElementProduct());
 
     const arrowColumns = document.querySelector(`[data-id="${fielValue}"]`);
     arrowColumns.insertAdjacentHTML(`beforeend`, `        
